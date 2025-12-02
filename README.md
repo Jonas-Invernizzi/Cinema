@@ -1,1 +1,4 @@
 # Cinema
+Este projeto, desenvolvido por Jonas Invernizzi e Felipe Trevisan, alunos do 2º ano do curso Técnico em Informática do IFRS – Campus Bento Gonçalves, consiste em uma aplicação web que simula uma sala de cinema utilizando HTML, CSS, JavaScript e PHP. A interface apresenta um mapa visual de cadeiras organizado em fileiras, com cores que indicam claramente o status de cada assento, permitindo ao usuário identificar quais estão disponíveis, selecionadas ou ocupadas.
+
+A interação é controlada por JavaScript, que registra os cliques nos assentos, atualiza as cores dinamicamente e envia ao servidor as cadeiras escolhidas. O PHP realiza o processamento final, verificando a disponibilidade no banco de dados e registrando as reservas de forma segura e organizada. Dessa forma, o projeto integra frontend e backend para oferecer uma simulação funcional e intuitiva do processo de seleção e reserva de cadeiras em uma sala de cinema.

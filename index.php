@@ -6,7 +6,7 @@ require_once "models/Auth.php";
 require_once "models/Rotas.php";
 
 $rotas = new Rotas();
-$rotas->get('/comprar','PoltronaController@comprar', false);
+$rotas->post('/comprar','PoltronaController@comprar', false);
 $rotas->get('/poltronas','PoltronaController@listar', false);
 $rotas->post('/login', 'LoginController@login', false);
 

@@ -15,7 +15,7 @@ class PoltronaDAO {
         SELECT p.id, p.fileira, p.coluna, p.usuario_id, p.status, u.email AS usuario_nome
     FROM 
         poltronas p 
-    INNER JOIN 
+    LEFT JOIN 
         usuarios u ON p.usuario_id = u.id
 ";
         

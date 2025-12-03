@@ -5,27 +5,32 @@ document.addEventListener('DOMContentLoaded', () => {
     carregarDadosDoBanco();
 });
 
-function carregarDadosDoBanco() {
+const carregarDadosDoBanco = async () => {
     poltronas = [];
-    const totalPoltronas = 32;
-    const colunasPorFileira = 8;
-    const fileiras = ['A', 'B', 'C', 'D'];
-
-    for (let i = 0; i < totalPoltronas; i++) {
-        const rowIndex = Math.floor(i / colunasPorFileira);
-        const colIndex = (i % colunasPorFileira) + 1;
+    try {
+        const requisicao = await fetch("http://localhost/github/cinema/poltronas");
         
-        poltronas.push({
-            id: i,
-            fileira: fileiras[rowIndex],
-            coluna: colIndex,
-            ocupada: Math.random() < 0.3
-        });
-    }
+        if (!requisicao.ok) {
+            throw new Error(`Erro de rede: ${requisicao.status}`);
+        }
 
-    renderizarPoltronas();
-    atualizarContador();
-}
+        const dados = await requisicao.json();
+
+        dados.forEach(element => {
+            poltronas.push({
+                id: element.id, 
+                fileira: element.fileira, 
+                coluna: element.coluna, 
+                ocupada: element.status === 'O' 
+            });
+        }); 
+
+        renderizarPoltronas();
+        atualizarContador();
+    } catch (error) {
+        console.error(error);
+    }
+};
 
 function renderizarPoltronas() {
     const grid = document.getElementById('seats-grid');
@@ -52,7 +57,6 @@ const fazerLogin = async () => {
     const user = document.getElementById('username').value;
     const pass = document.getElementById('password').value;
 
-    const response = await fetch("http://localhost/github/cinema/login");
     if (user === "admin" && pass === "1234") {
         document.getElementById('login-screen').classList.remove('active');
         document.getElementById('seats-screen').classList.add('active');
@@ -97,22 +101,42 @@ function fecharModal() {
     document.getElementById('purchase-modal').style.display = "none";
 }
 
-function confirmarCompra() {
+async function confirmarCompra() {
     const p = poltronas.find(item => item.id === poltronaSelecionadaId);
-    if (p) {
-        p.ocupada = true;
-        renderizarPoltronas();
-        atualizarContador();
-        fecharModal();
+    
+    if (!p) {
+        alert("Erro: Poltrona não encontrada.");
+        return;
     }
-}
 
-function cancelarReserva() {
-    const p = poltronas.find(item => item.id === poltronaSelecionadaId);
-    if (p) {
-        p.ocupada = false;
-        renderizarPoltronas();
-        atualizarContador();
-        fecharModal();
+    const dadosParaEnviar = {
+        poltrona_id: p.id
+    };
+
+    try {
+        const resposta = await fetch("http://localhost/github/cinema/comprar", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(dadosParaEnviar) 
+        });
+
+        if (resposta.ok) {
+            p.ocupada = true;
+            
+            renderizarPoltronas();
+            atualizarContador();
+            fecharModal();
+            alert(`Poltrona ${p.fileira}-${p.coluna} comprada com sucesso!`);
+            
+        } else {
+            const erroData = await resposta.json();
+            alert(`Falha na compra: ${erroData.message || 'Erro desconhecido do servidor.'}`);
+        }
+
+    } catch (error) {
+        console.error(error);
+        alert("Não foi possível conectar ao servidor para finalizar a compra.");
     }
 }

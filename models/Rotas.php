@@ -13,7 +13,7 @@ class Rotas {
     }
 
     function executar(){
-        $urlBase = '1030/';
+        $urlBase = 'github/cinema/';
         $metodo = $_SERVER['REQUEST_METHOD'];
         $url = rtrim(
             str_ireplace($urlBase, '', $_SERVER['REQUEST_URI']),

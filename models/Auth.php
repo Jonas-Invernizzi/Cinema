@@ -4,7 +4,7 @@ require "vendor/autoload.php";
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
-require_once "dao/class.UsuarioDAO.php";
+require_once "lib/class.UsuarioDAO.php";
 
 class Auth {
     static function check(){

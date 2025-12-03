@@ -12,11 +12,12 @@ class PoltronaDAO {
 
     function buscarTodos() {
         $sql = "
-            SELECT p.id, p.fileira, p.coluna, p.usuario_id,  p.status,  u.nome as usuario_nome
-            FROM poltronas p 
-            LEFT JOIN usuarios u 
-            ON (p.usuario_id = u.id)
-        ";
+        SELECT p.id, p.fileira, p.coluna, p.usuario_id, p.status, u.email AS usuario_nome
+    FROM 
+        poltronas p 
+    INNER JOIN 
+        usuarios u ON p.usuario_id = u.id
+";
         
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
@@ -27,22 +28,22 @@ class PoltronaDAO {
         return $poltronas ?: [];
     }
 
-    function buscarPorId($id) {
-        $sql = "
-            SELECT 
-                id, fileira, coluna, usuario_id, status 
-            FROM 
-                poltronas 
-            WHERE 
-                id = :id
-        ";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([':id' => $id]); 
+    function adquirir($id, $poltrona) {
+        $p = $this->buscarPorId($id);
+        if (!$p) 
+            throw new Exception("Poltrona não encontrada!");
 
-        $stmt->setFetchMode(PDO::FETCH_CLASS, Poltrona::class);
-        $poltrona = $stmt->fetch();
+        $sql = "UPDATE poltrona SET usuario_id=:usuario_id, status=:status WHERE id=:id";
+        $query = $this->pdo->prepare($sql);
+        $query->bindValue(':status', $poltrona->getStatus());
+        $query->bindValue(':usuario_id', $poltrona->getUsuarioId());
+        $query->bindValue(':id', $id);
+        if (!$query->execute())
+            throw new Exception("Erro ao atualizar registro.");
 
-        return $poltrona ?: null;
+        $p->setStatus($poltrona->getStatus());
+        $p->setUsuarioId($poltrona->getUsuarioId());
+        return $p;
     }
 }
 ?>

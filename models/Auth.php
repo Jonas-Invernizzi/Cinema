@@ -1,6 +1,4 @@
 <?php
-require "vendor/autoload.php";
-
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
@@ -8,7 +6,7 @@ require_once "lib/class.UsuarioDAO.php";
 
 class Auth {
     static function check(){
-        global $key;
+        global $key, $pdo;
 
         $headers = getallheaders();
         if (!isset($headers['Authorization'])) {
@@ -24,17 +22,14 @@ class Auth {
                 $token, new Key($key, 'HS256')
             );
 
-            $dao = new UsuarioDAO();
+            $dao = new UsuarioDAO($pdo);
             $usuario = $dao->buscarPorId($resultado->userId);
 
             return !!$usuario;
 
         }catch(Exception $e){
-            http_response_code(403);
-            echo json_encode(['error'=>$e->getMessage()]);
-            exit;
+            return false;
         }
     }
 }
-
 ?>

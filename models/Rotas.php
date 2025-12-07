@@ -1,5 +1,4 @@
 <?php
-
 class Rotas {
     private $rotas;
     function __construct(){ $this->rotas = []; }
@@ -13,7 +12,7 @@ class Rotas {
     }
 
     function executar(){
-        $urlBase = 'github/cinema/';
+        $urlBase = 'cinema/';
         $metodo = $_SERVER['REQUEST_METHOD'];
         $url = rtrim(
             str_ireplace($urlBase, '', $_SERVER['REQUEST_URI']),
@@ -34,9 +33,8 @@ class Rotas {
             $controller = new $controllerNome();
             
             if ($rota['protegida'] && !Auth::check()){
-                http_response_code(404);
-                echo json_encode(['error'=>"Você não está autenticado."]);
-                return;
+                http_response_code(403);
+                return ['error'=>"Você não está autenticado."];
             }
             return call_user_func_array([$controller, $acao], $matches);    
         }
@@ -44,5 +42,4 @@ class Rotas {
         return ['error'=>"Url não encontrada"];
     }   
 }
-
 ?>

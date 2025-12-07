@@ -1,40 +1,36 @@
 <?php
-require "vendor/autoload.php";
 use Firebase\JWT\JWT;
 
-require_once "dao/class.AuthDAO.php";
+require_once "lib/class.UsuarioDAO.php";
 
 class LoginController {
-    private $dao;
-
-    function __construct(){
-        $this->dao = new AuthDAO();
-    }
 
     function login(){
-        global $key;
+        global $key, $pdo;
 
         $dados = json_decode(file_get_contents("php://input"));
 
-        $usuario = $this->dao->login($dados->email, $dados->password);
+        if (!isset($dados->email) || !isset($dados->password)) {
+            return ['error' => 'Dados incompletos'];
+        }
 
+        $dao = new UsuarioDAO($pdo);
+        $usuario = $dao->login($dados->email, $dados->password);
 
         if ($usuario) {
             $payload = [
                 'iss'=> 'http://localhost',
                 'iat' => time(),
-                'exp' => time() + 1 * 60 * 60 
+                'exp' => time() + 3600,
+                'userId' => $usuario->getId()
             ];
-
-            $payload['userId'] = $usuario->getId();
 
             $jwt = JWT::encode($payload, $key, 'HS256');
 
             return ['token' => $jwt];
         }
 
-        return ['error' => 'Usuário não encontrado!'];
+        return ['error' => 'Usuário ou senha inválidos!'];
     }
 }
-
 ?>

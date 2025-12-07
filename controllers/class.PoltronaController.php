@@ -1,32 +1,32 @@
 <?php
-
-require_once "models/class.Poltrona.php";
 require_once "lib/class.PoltronaDAO.php";
 
 class PoltronaController {
-    private $dao;
-
-    function __construct() { 
-        $this->dao = new PoltronaDAO(); 
-    }
 
     function listar(){
-        return $this->dao->buscarTodos();
+        global $pdo;
+        $dao = new PoltronaDAO($pdo);
+        return $dao->listar();
     }
 
-    function comprar($id) {
+    function comprar() {
+        global $pdo;
+        
         $dados = json_decode(file_get_contents('php://input'));
         
-        if ($dados === null) {
-            throw new Exception("Dados de entrada JSON inválidos.");
+        if ($dados === null || !isset($dados->id_poltrona) || !isset($dados->id_usuario)) {
+            http_response_code(400);
+            return ["error" => "Dados inválidos."];
         }
 
-        $p = new Poltrona();
-        $p->setUsuarioId(isset($dados->usuario_id) && $dados->usuario_id ? $dados->usuario_id : null);
-        $p->setStatus($dados->status);
+        $dao = new PoltronaDAO($pdo);
         
-        return $this->dao->adquirir($id, $p);
+        if ($dao->comprar($dados->id_poltrona, $dados->id_usuario)) {
+            return ["mensagem" => "Compra realizada!"];
+        }
+        
+        http_response_code(409);
+        return ["error" => "Poltrona indisponível."];
     }
 }
-
 ?>

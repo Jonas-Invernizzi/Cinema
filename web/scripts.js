@@ -1,34 +1,54 @@
 let poltronas = [];
 let poltronaSelecionadaId = null;
 
+const BASE_URL = "http://localhost/cinema";
+
 document.addEventListener('DOMContentLoaded', () => {
-    carregarDadosDoBanco();
+    document.getElementById('btn-cancel').addEventListener('click', fecharModal);
+    document.getElementById('btn-buy').addEventListener('click', confirmarCompra);
+    if(localStorage.getItem('token')) {
+        document.getElementById('login-screen').classList.remove('active');
+        document.getElementById('seats-screen').classList.add('active');
+        carregarDadosDoBanco();
+    }
 });
+
+function parseJwt (token) {
+    try {
+        var base64Url = token.split('.')[1];
+        var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+    } catch (e) {
+        return null;
+    }
+}
 
 const carregarDadosDoBanco = async () => {
     poltronas = [];
     try {
-        const requisicao = await fetch("http://localhost/github/cinema/poltronas");
+        const requisicao = await fetch(`${BASE_URL}/poltronas`);
         
         if (!requisicao.ok) {
-            throw new Error(`Erro de rede: ${requisicao.status}`);
+            throw new Error(`Erro: ${requisicao.status}`);
         }
 
         const dados = await requisicao.json();
 
-        dados.forEach(element => {
-            poltronas.push({
-                id: element.id, 
-                fileira: element.fileira, 
-                coluna: element.coluna, 
-                ocupada: element.status === 'O' 
-            });
-        }); 
+        poltronas = dados.map(element => ({
+            id: element.id, 
+            fileira: element.fileira, 
+            coluna: element.coluna, 
+            ocupada: element.status === 'Vendido' 
+        }));
 
         renderizarPoltronas();
         atualizarContador();
     } catch (error) {
         console.error(error);
+        alert("Erro ao conectar com o servidor.");
     }
 };
 
@@ -54,18 +74,36 @@ function atualizarContador() {
 }
 
 const fazerLogin = async () => {
-    const user = document.getElementById('username').value;
-    const pass = document.getElementById('password').value;
+    const email = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
 
-    if (user === "admin" && pass === "1234") {
-        document.getElementById('login-screen').classList.remove('active');
-        document.getElementById('seats-screen').classList.add('active');
-    } else {
-        alert("Credenciais inválidas! Use: admin / 1234");
+    try {
+        const resposta = await fetch(`${BASE_URL}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email, password: password })
+        });
+
+        const dados = await resposta.json();
+
+        if (resposta.ok && dados.token) {
+            localStorage.setItem('token', dados.token);
+
+            document.getElementById('login-screen').classList.remove('active');
+            document.getElementById('seats-screen').classList.add('active');
+            
+            carregarDadosDoBanco();
+        } else {
+            alert(dados.error || "Login falhou");
+        }
+    } catch (error) {
+        console.error(error);
+        alert("Erro ao tentar fazer login.");
     }
 }
 
 function logout() {
+    localStorage.removeItem('token');
     document.getElementById('seats-screen').classList.remove('active');
     document.getElementById('login-screen').classList.add('active');
     document.getElementById('username').value = "";
@@ -91,7 +129,7 @@ function abrirModalCompra(poltrona) {
         document.getElementById('modal-status').innerText = "Disponível";
         document.getElementById('modal-status').style.color = "lightgreen";
         btnComprar.style.display = "block";
-        btnCancelar.style.display = "none";
+        btnCancelar.style.display = "block";
     }
 
     modal.style.display = "flex";
@@ -103,40 +141,53 @@ function fecharModal() {
 
 async function confirmarCompra() {
     const p = poltronas.find(item => item.id === poltronaSelecionadaId);
+    const token = localStorage.getItem('token');
     
-    if (!p) {
-        alert("Erro: Poltrona não encontrada.");
+    if (!token) {
+        alert("Sessão expirada.");
+        logout();
+        return;
+    }
+
+    const userData = parseJwt(token);
+    const userId = userData ? userData.userId : null;
+
+    if (!p || !userId) {
+        alert("Erro: Dados inválidos.");
         return;
     }
 
     const dadosParaEnviar = {
-        poltrona_id: p.id
+        id_poltrona: p.id,
+        id_usuario: userId
     };
 
     try {
-        const resposta = await fetch("http://localhost/github/cinema/comprar", {
+        const resposta = await fetch(`${BASE_URL}/comprar`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify(dadosParaEnviar) 
         });
 
+        const dadosRetorno = await resposta.json();
+
         if (resposta.ok) {
             p.ocupada = true;
             
-            renderizarPoltronas();
-            atualizarContador();
             fecharModal();
-            alert(`Poltrona ${p.fileira}-${p.coluna} comprada com sucesso!`);
+            alert(`Sucesso: ${dadosRetorno.mensagem}`);
+            
+            carregarDadosDoBanco();
             
         } else {
-            const erroData = await resposta.json();
-            alert(`Falha na compra: ${erroData.message || 'Erro desconhecido do servidor.'}`);
+            alert(`Falha: ${dadosRetorno.error || 'Erro desconhecido.'}`);
         }
 
     } catch (error) {
         console.error(error);
-        alert("Não foi possível conectar ao servidor para finalizar a compra.");
+        alert("Não foi possível conectar ao servidor.");
     }
 }

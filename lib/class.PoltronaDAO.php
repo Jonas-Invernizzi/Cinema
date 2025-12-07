@@ -1,49 +1,40 @@
 <?php
-require_once "class.Banco.php";
 require_once "models/class.Poltrona.php";
-require_once "models/class.Usuario.php";
 
 class PoltronaDAO {
     private $pdo;
 
-    function __construct() { 
-        $this->pdo = Banco::getConexao(); 
+    public function __construct(PDO $driver) {
+        $this->pdo = $driver;
     }
 
-    function buscarTodos() {
-        $sql = "
-        SELECT p.id, p.fileira, p.coluna, p.usuario_id, p.status, u.email AS usuario_nome
-    FROM 
-        poltronas p 
-    LEFT JOIN 
-        usuarios u ON p.usuario_id = u.id
-";
-        
+    public function listar() {
+        $sql = "SELECT * FROM poltronas ORDER BY fileira, coluna";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
-
-        $stmt->setFetchMode(PDO::FETCH_CLASS, Poltrona::class);
-        $poltronas = $stmt->fetchAll();
-
-        return $poltronas ?: [];
+        
+        $lista = [];
+        while ($dados = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $p = new Poltrona();
+            $p->setId($dados['id']);
+            $p->setFileira($dados['fileira']);
+            $p->setColuna($dados['coluna']);
+            $p->setUsuarioId($dados['usuario_id']);
+            $p->setStatus($dados['status']);
+            $lista[] = $p;
+        }
+        return $lista;
     }
 
-    function adquirir($id, $poltrona) {
-        $p = $this->buscarPorId($id);
-        if (!$p) 
-            throw new Exception("Poltrona não encontrada!");
-
-        $sql = "UPDATE poltrona SET usuario_id=:usuario_id, status=:status WHERE id=:id";
-        $query = $this->pdo->prepare($sql);
-        $query->bindValue(':status', $poltrona->getStatus());
-        $query->bindValue(':usuario_id', $poltrona->getUsuarioId());
-        $query->bindValue(':id', $id);
-        if (!$query->execute())
-            throw new Exception("Erro ao atualizar registro.");
-
-        $p->setStatus($poltrona->getStatus());
-        $p->setUsuarioId($poltrona->getUsuarioId());
-        return $p;
+    public function comprar($idPoltrona, $idUsuario) {
+        $sql = "UPDATE poltronas SET usuario_id = :uid, status = 'Vendido' 
+                WHERE id = :pid AND status = 'Disponivel'";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':uid', $idUsuario);
+        $stmt->bindValue(':pid', $idPoltrona);
+        
+        return $stmt->execute() && $stmt->rowCount() > 0;
     }
 }
 ?>

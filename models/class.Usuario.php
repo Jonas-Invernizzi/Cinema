@@ -4,13 +4,16 @@ class Usuario implements JsonSerializable {
     private $email;
     private $password;
     
-    function getId() { return $this->id; } 
-    function setEmail($o) { $this->email = $o; }
-    function getEmail() { return $this-> email; }
-    function setPassword($o) { $this->password = $o; }
-    function getPassword() { return $this-> password; }
+    public function setId($id) { $this->id = $id; }
+    public function getId() { return $this->id; }
     
-    function jsonSerialize(){
+    public function setEmail($email) { $this->email = $email; }
+    public function getEmail() { return $this->email; }
+    
+    public function setPassword($password) { $this->password = $password; }
+    public function getPassword() { return $this->password; }
+    
+    public function jsonSerialize(): mixed {
         return [
             'id'=> $this->id, 
             'email' => $this->email

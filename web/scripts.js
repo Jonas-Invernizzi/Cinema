@@ -4,8 +4,10 @@ let poltronaSelecionadaId = null;
 const BASE_URL = "http://localhost/cinema";
 
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('btn-cancel').addEventListener('click', fecharModal);
+    document.getElementById('btn-cancel').addEventListener('click', fecharModal); 
     document.getElementById('btn-buy').addEventListener('click', confirmarCompra);
+    document.getElementById('btn-logout').addEventListener('click', logout);
+
     if(localStorage.getItem('token')) {
         document.getElementById('login-screen').classList.remove('active');
         document.getElementById('seats-screen').classList.add('active');
@@ -28,11 +30,30 @@ function parseJwt (token) {
 
 const carregarDadosDoBanco = async () => {
     poltronas = [];
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+        alert("Sessão expirada. Faça login para carregar os dados.");
+        logout();
+        return;
+    }
+
     try {
-        const requisicao = await fetch(`${BASE_URL}/poltronas`);
+        const requisicao = await fetch(`${BASE_URL}/poltronas`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}` 
+            }
+        });
         
+        if (requisicao.status === 401) {
+            alert("Sessão inválida ou expirada. Faça login novamente.");
+            logout();
+            return;
+        }
+
         if (!requisicao.ok) {
-            throw new Error(`Erro: ${requisicao.status}`);
+            throw new Error(`Erro ao carregar poltronas: ${requisicao.status}`);
         }
 
         const dados = await requisicao.json();
@@ -41,14 +62,14 @@ const carregarDadosDoBanco = async () => {
             id: element.id, 
             fileira: element.fileira, 
             coluna: element.coluna, 
-            ocupada: element.status === 'Vendido' 
+            ocupada: element.usuario_id !== null
         }));
 
         renderizarPoltronas();
         atualizarContador();
     } catch (error) {
         console.error(error);
-        alert("Erro ao conectar com o servidor.");
+        alert("Erro ao conectar com o servidor para carregar poltronas.");
     }
 };
 
@@ -61,7 +82,7 @@ function renderizarPoltronas() {
         seatDiv.classList.add('seat');
         seatDiv.classList.add(poltrona.ocupada ? 'taken' : 'free');
         
-        seatDiv.onclick = () => abrirModalCompra(poltrona);
+        seatDiv.onclick = () => abrirModalCompra(poltrona); 
 
         grid.appendChild(seatDiv);
     });
@@ -76,7 +97,7 @@ function atualizarContador() {
 const fazerLogin = async () => {
     const email = document.getElementById('username').value;
     const password = document.getElementById('password').value;
-
+    
     try {
         const resposta = await fetch(`${BASE_URL}/login`, {
             method: 'POST',
@@ -87,7 +108,7 @@ const fazerLogin = async () => {
         const dados = await resposta.json();
 
         if (resposta.ok && dados.token) {
-            localStorage.setItem('token', dados.token);
+            localStorage.setItem('token', dados.token); 
 
             document.getElementById('login-screen').classList.remove('active');
             document.getElementById('seats-screen').classList.add('active');
@@ -144,17 +165,17 @@ async function confirmarCompra() {
     const token = localStorage.getItem('token');
     
     if (!token) {
-        alert("Sessão expirada.");
+        alert("Sessão expirada. Faça login para comprar.");
         logout();
-        return;
+        return; 
     }
 
     const userData = parseJwt(token);
     const userId = userData ? userData.userId : null;
 
     if (!p || !userId) {
-        alert("Erro: Dados inválidos.");
-        return;
+        alert("Erro: Dados inválidos para compra.");
+        return; 
     }
 
     const dadosParaEnviar = {
@@ -167,27 +188,37 @@ async function confirmarCompra() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+                'Authorization': `Bearer ${token}` 
             },
             body: JSON.stringify(dadosParaEnviar) 
         });
 
+        if (resposta.status === 401) {
+            alert("Sessão inválida ou expirada. Faça login novamente.");
+            logout();
+            return;
+        }
+        
         const dadosRetorno = await resposta.json();
 
         if (resposta.ok) {
-            p.ocupada = true;
-            
+            p.ocupada = true; 
             fecharModal();
-            alert(`Sucesso: ${dadosRetorno.mensagem}`);
             
-            carregarDadosDoBanco();
+            alert(`✅ Sucesso: ${dadosRetorno.mensagem || 'Poltrona comprada com sucesso!'}`);
             
+            renderizarPoltronas();
+            atualizarContador();
+            
+            return; 
         } else {
-            alert(`Falha: ${dadosRetorno.error || 'Erro desconhecido.'}`);
+            alert(`❌ Falha na Compra: ${dadosRetorno.error || 'Erro desconhecido do servidor.'}`);
+            return; 
         }
 
     } catch (error) {
         console.error(error);
-        alert("Não foi possível conectar ao servidor.");
+        alert("🚨 Não foi possível conectar ao servidor para efetuar a compra.");
+        return; 
     }
 }

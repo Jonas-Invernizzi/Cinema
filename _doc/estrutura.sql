@@ -13,7 +13,6 @@ CREATE TABLE poltronas (
     fileira INT NOT NULL,
     coluna INT NOT NULL,
     usuario_id INT DEFAULT NULL,
-    status ENUM("Vendido", "Disponivel") NOT NULL DEFAULT "Disponivel", 
     PRIMARY KEY (id),
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
 );

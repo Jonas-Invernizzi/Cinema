@@ -11,12 +11,12 @@ INSERT INTO usuarios (email, senha) VALUES
 --('david@email.com', 'senhaabc'),
 --('eva@email.com', 'senhaxyz');
 
-INSERT INTO poltronas (fileira, coluna, status) VALUES
-(1, 1, 'Disponivel'), (1, 2, 'Disponivel'), (1, 3, 'Disponivel'), (1, 4, 'Disponivel'),
-(2, 1, 'Disponivel'), (2, 2, 'Disponivel'), (2, 3, 'Disponivel'), (2, 4, 'Disponivel'),
-(3, 1, 'Disponivel'), (3, 2, 'Disponivel'), (3, 3, 'Disponivel'), (3, 4, 'Disponivel'),
-(4, 1, 'Disponivel'), (4, 2, 'Disponivel'), (4, 3, 'Disponivel'), (4, 4, 'Disponivel'),
-(5, 1, 'Disponivel'), (5, 2, 'Disponivel'), (5, 3, 'Disponivel'), (5, 4, 'Disponivel'),
-(6, 1, 'Disponivel'), (6, 2, 'Disponivel'), (6, 3, 'Disponivel'), (6, 4, 'Disponivel'),
-(7, 1, 'Disponivel'), (7, 2, 'Disponivel'), (7, 3, 'Disponivel'), (7, 4, 'Disponivel'),
-(8, 1, 'Disponivel'), (8, 2, 'Disponivel'), (8, 3, 'Disponivel'), (8, 4, 'Disponivel');
+INSERT INTO poltronas (fileira, coluna) VALUES
+(1, 1), (1, 2), (1, 3), (1, 4),
+(2, 1), (2, 2), (2, 3), (2, 4),
+(3, 1), (3, 2), (3, 3), (3, 4),
+(4, 1), (4, 2), (4, 3), (4, 4),
+(5, 1), (5, 2), (5, 3), (5, 4),
+(6, 1), (6, 2), (6, 3), (6, 4),
+(7, 1), (7, 2), (7, 3), (7, 4),
+(8, 1), (8, 2), (8, 3), (8, 4);

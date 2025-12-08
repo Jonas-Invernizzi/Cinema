@@ -20,15 +20,14 @@ class PoltronaDAO {
             $p->setFileira($dados['fileira']);
             $p->setColuna($dados['coluna']);
             $p->setUsuarioId($dados['usuario_id']);
-            $p->setStatus($dados['status']);
             $lista[] = $p;
         }
         return $lista;
     }
 
     public function comprar($idPoltrona, $idUsuario) {
-        $sql = "UPDATE poltronas SET usuario_id = :uid, status = 'Vendido' 
-                WHERE id = :pid AND status = 'Disponivel'";
+        $sql = "UPDATE poltronas SET usuario_id = :uid 
+                WHERE id = :pid AND usuario_id IS NULL;";
         
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':uid', $idUsuario);
@@ -37,4 +36,3 @@ class PoltronaDAO {
         return $stmt->execute() && $stmt->rowCount() > 0;
     }
 }
-?>

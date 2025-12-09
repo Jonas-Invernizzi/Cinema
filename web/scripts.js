@@ -205,20 +205,20 @@ async function confirmarCompra() {
             p.ocupada = true; 
             fecharModal();
             
-            alert(`✅ Sucesso: ${dadosRetorno.mensagem || 'Poltrona comprada com sucesso!'}`);
+            alert(`Sucesso: ${dadosRetorno.mensagem || 'Poltrona comprada com sucesso!'}`);
             
             renderizarPoltronas();
             atualizarContador();
             
             return; 
         } else {
-            alert(`❌ Falha na Compra: ${dadosRetorno.error || 'Erro desconhecido do servidor.'}`);
+            alert(`Falha na Compra: ${dadosRetorno.error || 'Erro desconhecido do servidor.'}`);
             return; 
         }
 
     } catch (error) {
         console.error(error);
-        alert("🚨 Não foi possível conectar ao servidor para efetuar a compra.");
+        alert("Não foi possível conectar ao servidor para efetuar a compra.");
         return; 
     }
 }
